@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Gemini Smart Calc",
+  "description": "A high-performance scientific calculator with natural language processing powered by Google Gemini AI, featuring history tracking and Material 3 design.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
