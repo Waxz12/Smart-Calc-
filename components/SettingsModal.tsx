@@ -19,7 +19,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ limit, setLimit, theme, s
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-lexend">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300"
@@ -27,9 +27,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ limit, setLimit, theme, s
       />
       
       {/* Modal Content */}
-      <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 shadow-2xl rounded-3xl overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 dark:border-zinc-800">
+      <div className="relative w-full max-sm bg-white dark:bg-zinc-900 shadow-2xl rounded-3xl overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100 dark:border-zinc-800">
         <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-          <h2 className="text-xl font-bold font-google text-gray-900 dark:text-white">Settings</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Settings</h2>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -71,7 +71,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ limit, setLimit, theme, s
                 <button
                   key={l}
                   onClick={() => setLimit(l)}
-                  className={`py-2 rounded-lg font-google font-medium text-xs transition-all border ${
+                  className={`py-2 rounded-lg font-medium text-xs transition-all border ${
                     limit === l
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/10'
                       : 'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 border-gray-200 dark:border-zinc-700 hover:border-indigo-300 dark:hover:border-zinc-500'
@@ -81,14 +81,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ limit, setLimit, theme, s
                 </button>
               ))}
             </div>
-            <p className="mt-3 text-[10px] text-gray-500 dark:text-zinc-500 leading-normal">
-              Number of past calculations to keep. Pruning occurs automatically when decreased.
-            </p>
           </section>
 
           <section className="pt-4 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-[11px]">
             <span className="text-gray-500 dark:text-zinc-500 font-medium">Gemini Smart Calc</span>
-            <span className="text-gray-400 dark:text-zinc-600">v2.2.0-stable</span>
+            <span className="text-gray-400 dark:text-zinc-600">v2.3.0-lexend</span>
           </section>
         </div>
 

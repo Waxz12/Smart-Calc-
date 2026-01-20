@@ -11,7 +11,7 @@ interface HistorySidebarProps {
 
 const HistorySidebar: React.FC<HistorySidebarProps> = ({ history, onClose, onClear, onSelect }) => {
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-50 flex justify-end font-lexend">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300"
@@ -21,7 +21,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({ history, onClose, onCle
       {/* Sidebar Content */}
       <div className="relative w-full max-w-xs h-full bg-white dark:bg-zinc-900 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
         <div className="p-6 flex items-center justify-between border-b border-gray-100 dark:border-zinc-800">
-          <h2 className="text-xl font-bold font-google text-gray-900 dark:text-white">History</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">History</h2>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-white">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -54,7 +54,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({ history, onClose, onCle
                     {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <div className="text-sm text-gray-500 dark:text-zinc-400 truncate mb-1">
+                <div className="text-sm text-gray-500 dark:text-zinc-400 truncate mb-1 font-medium">
                   {item.expression}
                 </div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">

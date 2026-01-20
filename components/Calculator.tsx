@@ -145,11 +145,11 @@ const Calculator: React.FC<CalculatorProps> = ({
   };
 
   return (
-    <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 transition-all flex flex-col max-h-[90vh]">
+    <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 transition-all flex flex-col max-h-[90vh] font-lexend">
       {/* Display Area */}
       <div className="p-8 pb-4 text-right flex flex-col justify-end min-h-[140px] bg-gray-50/50 dark:bg-zinc-900/50 relative">
         <div className="text-sm font-medium text-gray-400 dark:text-zinc-500 mb-1 h-5 overflow-hidden truncate">{formula}</div>
-        <div className="text-5xl font-google font-medium text-gray-900 dark:text-white truncate">{display}</div>
+        <div className="text-5xl font-semibold text-gray-900 dark:text-white truncate">{display}</div>
         <div className="absolute top-4 left-6 flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${mode === 'ai' ? 'bg-indigo-500' : mode === 'formula' ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{mode}</span>
@@ -170,7 +170,7 @@ const Calculator: React.FC<CalculatorProps> = ({
       <div className="p-4 flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2">
         {mode === 'ai' && (
           <div className="space-y-4">
-            <textarea value={aiInput} onChange={(e) => setAiInput(e.target.value)} placeholder="e.g. 'Calculate mortgage for $300k at 4% for 30 years'" className="w-full h-24 p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 text-sm resize-none" />
+            <textarea value={aiInput} onChange={(e) => setAiInput(e.target.value)} placeholder="e.g. 'Mortgage for $300k at 4% for 30 years'" className="w-full h-24 p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl border-none focus:ring-2 focus:ring-indigo-500 text-sm resize-none" />
             <button onClick={() => onAIQuery(aiInput)} disabled={isProcessingAI || !aiInput.trim()} className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-transform disabled:opacity-50">
               {isProcessingAI ? 'Thinking...' : 'Solve with AI'}
             </button>
@@ -178,7 +178,6 @@ const Calculator: React.FC<CalculatorProps> = ({
               <div className="p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl space-y-2 border border-indigo-100 dark:border-indigo-900/30">
                 <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Logic Breakdown</p>
                 {aiDetail.steps.map((s, i) => <p key={i} className="text-xs text-gray-600 dark:text-zinc-400">• {s}</p>)}
-                <p className="text-[10px] text-gray-400 dark:text-zinc-500 italic mt-2">Reasoning: {aiDetail.reasoning}</p>
               </div>
             )}
           </div>
@@ -190,7 +189,7 @@ const Calculator: React.FC<CalculatorProps> = ({
               <textarea 
                 value={formulaInput} 
                 onChange={(e) => setFormulaInput(e.target.value)} 
-                placeholder="Write your formulas line by line..."
+                placeholder="Write formulas line by line..."
                 className="w-full h-48 p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl border-none focus:ring-2 focus:ring-amber-500 text-sm font-mono resize-none leading-relaxed"
               />
             </div>
@@ -202,7 +201,7 @@ const Calculator: React.FC<CalculatorProps> = ({
                 {formulaResults.map((res, i) => res.line && (
                   <div key={i} className={`p-3 rounded-xl flex items-center justify-between gap-4 border ${res.isError ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30' : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-100 dark:border-zinc-800'}`}>
                     <span className="text-xs text-gray-500 dark:text-zinc-400 font-mono truncate">{res.line}</span>
-                    <span className={`text-xs font-bold ${res.isError ? 'text-red-500' : 'text-amber-600'}`}>= {res.result}</span>
+                    <span className="text-xs font-bold text-amber-600">= {res.result}</span>
                   </div>
                 ))}
               </div>
@@ -226,12 +225,12 @@ const Calculator: React.FC<CalculatorProps> = ({
 
             <CalcBtn label="x²" onClick={() => handleScientific('x²')} type="sci" />
             <CalcBtn label="x³" onClick={() => handleScientific('x³')} type="sci" />
-            <CalcBtn label="^" onClick={() => handleOperator('^')} type="sci" className="font-bold text-lg" />
+            <CalcBtn label="^" onClick={() => handleOperator('^')} type="sci" className="font-bold text-sm" />
             <CalcBtn label="√" onClick={() => handleScientific('√')} type="sci" />
             <CalcBtn label="n!" onClick={() => handleScientific('n!')} type="sci" />
 
-            <CalcBtn label="π" onClick={() => handleNumber('π')} type="sci" className="font-google" />
-            <CalcBtn label="e" onClick={() => handleNumber('e')} type="sci" className="font-google italic" />
+            <CalcBtn label="π" onClick={() => handleNumber('π')} type="sci" className="italic" />
+            <CalcBtn label="e" onClick={() => handleNumber('e')} type="sci" className="italic" />
             <CalcBtn label="abs" onClick={() => handleScientific('abs')} type="sci" />
             <CalcBtn label="(" onClick={() => handleNumber('(')} type="sci" />
             <CalcBtn label=")" onClick={() => handleNumber(')')} type="sci" />
@@ -272,11 +271,11 @@ const Calculator: React.FC<CalculatorProps> = ({
 
 const CalcBtn = ({ label, onClick, type = 'num', className = '' }: any) => {
   const styles: any = {
-    num: "bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white text-xl",
+    num: "bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white text-xl font-medium",
     operator: "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-2xl font-bold",
-    action: "bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 text-lg",
+    action: "bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 text-lg font-medium",
     equals: "bg-indigo-600 text-white text-2xl font-bold shadow-lg shadow-indigo-600/20",
-    sci: "bg-zinc-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-400 text-[10px] font-black uppercase h-10"
+    sci: "bg-zinc-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-400 text-[10px] font-bold uppercase h-10"
   };
   const hClass = type === 'sci' ? 'h-10' : 'h-14';
   return <button onClick={onClick} className={`${hClass} rounded-2xl flex items-center justify-center active:scale-95 transition-all duration-75 ${styles[type]} ${className}`}>{label}</button>;

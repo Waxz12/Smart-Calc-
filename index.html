@@ -18,13 +18,13 @@
       theme: { 
         extend: { 
           fontFamily: { 
-            google: ['Google Sans', 'sans-serif'] 
+            lexend: ['Lexend', 'sans-serif'] 
           } 
         } 
       } 
     };
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script type="importmap">
 {
   "imports": {
@@ -41,6 +41,7 @@
 </script>
   <style> 
     body { 
+      font-family: 'Lexend', sans-serif;
       -webkit-user-select: none; 
       user-select: none; 
       overscroll-behavior-y: contain;
@@ -51,20 +52,13 @@
   <div id="root"></div>
   <script type="module" src="./index.tsx"></script>
   <script>
-    // Robust Service Worker registration to prevent Origin Mismatch errors in previews
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', async () => {
         try {
-          // Detect if we are in a sandboxed environment that might block SW
           const isSandboxed = window.location.origin === 'null' || window.location.hostname.includes('usercontent.goog');
-          
           if (!isSandboxed) {
-            const registration = await navigator.serviceWorker.register('./sw.js', {
-              scope: './'
-            });
+            const registration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
             console.log('SW Registered successfully:', registration.scope);
-          } else {
-            console.warn('Skipping Service Worker registration in sandboxed environment.');
           }
         } catch (err) {
           console.error('Service Worker registration failed:', err);
