@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { HistoryItem, Theme, CalcMode, AIResponse } from './types';
 import Calculator from './components/Calculator';
@@ -6,20 +7,9 @@ import SettingsModal from './components/SettingsModal';
 import { processAIMath } from './services/geminiService';
 
 const App: React.FC = () => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('theme');
-    return (saved as Theme) || Theme.SYSTEM;
-  });
-  
-  const [history, setHistory] = useState<HistoryItem[]>(() => {
-    const saved = localStorage.getItem('history');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  const [historyLimit, setHistoryLimit] = useState<number>(() => {
-    const saved = localStorage.getItem('historyLimit');
-    return saved ? parseInt(saved, 10) : 50;
-  });
+  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || Theme.SYSTEM);
+  const [historyLimit, setHistoryLimit] = useState<number>(() => Number(localStorage.getItem('historyLimit')) || 50);
+  const [history, setHistory] = useState<HistoryItem[]>(() => JSON.parse(localStorage.getItem('history') || '[]'));
   
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -28,159 +18,112 @@ const App: React.FC = () => {
   const [mode, setMode] = useState<CalcMode>('standard');
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [lastAIDetail, setLastAIDetail] = useState<AIResponse | undefined>();
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  // Refined theme application and listener logic
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
-    const applyTheme = () => {
-      const isDark = theme === Theme.SYSTEM 
-        ? mediaQuery.matches 
-        : theme === Theme.DARK;
-      
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+    const online = () => setIsOffline(false);
+    const offline = () => setIsOffline(true);
+    window.addEventListener('online', online);
+    window.addEventListener('offline', offline);
+    return () => { 
+      window.removeEventListener('online', online); 
+      window.removeEventListener('offline', offline); 
     };
+  }, []);
 
-    applyTheme();
+  useEffect(() => {
+    const isDark = theme === Theme.SYSTEM ? window.matchMedia('(prefers-color-scheme: dark)').matches : theme === Theme.DARK;
+    document.documentElement.classList.toggle('dark', isDark);
     localStorage.setItem('theme', theme);
-    
-    // Always listen for system changes but only act if theme is SYSTEM
-    const listener = () => {
-      if (theme === Theme.SYSTEM) {
-        applyTheme();
-      }
-    };
-
-    mediaQuery.addEventListener('change', listener);
-    return () => mediaQuery.removeEventListener('change', listener);
   }, [theme]);
 
   useEffect(() => {
-    localStorage.setItem('history', JSON.stringify(history));
-  }, [history]);
-
-  useEffect(() => {
-    localStorage.setItem('historyLimit', historyLimit.toString());
-    if (history.length > historyLimit) {
-      setHistory(prev => prev.slice(0, historyLimit));
+    // Prune history when limit changes
+    const pruned = history.slice(0, historyLimit);
+    if (pruned.length !== history.length) {
+      setHistory(pruned);
     }
-  }, [historyLimit, history.length]);
+    localStorage.setItem('history', JSON.stringify(pruned));
+    localStorage.setItem('historyLimit', String(historyLimit));
+  }, [history, historyLimit]);
 
-  // Cycle: Light -> Dark -> System
-  const toggleTheme = () => {
-    setTheme(prev => {
-      if (prev === Theme.LIGHT) return Theme.DARK;
-      if (prev === Theme.DARK) return Theme.SYSTEM;
-      return Theme.LIGHT;
-    });
+  const handleAIQuery = async (query: string) => {
+    if (isOffline) { 
+      setFormula("Offline: AI disabled"); 
+      return; 
+    }
+    setIsProcessingAI(true);
+    try {
+      const res = await processAIMath(query);
+      if (res.result !== "Error") {
+        setDisplay(String(res.result));
+        setFormula(query);
+        setLastAIDetail(res);
+        const newItem: HistoryItem = { 
+          id: crypto.randomUUID(), 
+          expression: query, 
+          result: String(res.result), 
+          timestamp: Date.now(), 
+          isAI: true 
+        };
+        setHistory(prev => [newItem, ...prev].slice(0, historyLimit));
+      }
+    } finally { 
+      setIsProcessingAI(false); 
+    }
   };
 
-  const addToHistory = useCallback((item: Omit<HistoryItem, 'id' | 'timestamp'>) => {
+  const addToHistory = (item: Omit<HistoryItem, 'id' | 'timestamp'>) => {
     const newItem: HistoryItem = {
       ...item,
       id: crypto.randomUUID(),
       timestamp: Date.now()
     };
     setHistory(prev => [newItem, ...prev].slice(0, historyLimit));
-  }, [historyLimit]);
-
-  const handleAIQuery = async (query: string) => {
-    if (!query.trim()) return;
-    setIsProcessingAI(true);
-    setLastAIDetail(undefined);
-    try {
-      const response = await processAIMath(query);
-      setIsProcessingAI(false);
-      
-      if (response.result !== 'Error') {
-        setDisplay(String(response.result));
-        setFormula(query);
-        setLastAIDetail(response);
-        addToHistory({
-          expression: query,
-          result: String(response.result),
-          isAI: true
-        });
-      } else {
-        setFormula("AI Error: Problem too complex or ambiguous.");
-      }
-    } catch (error) {
-      setIsProcessingAI(false);
-      setFormula("Failed to connect to Gemini AI.");
-    }
-  };
-
-  const clearHistory = () => {
-    setHistory([]);
-    localStorage.removeItem('history');
-  };
-
-  const getThemeIcon = () => {
-    if (theme === Theme.SYSTEM) {
-      return (
-        <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      );
-    }
-    if (theme === Theme.LIGHT) {
-      return (
-        <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.95 16.95l.707.707M7.05 7.05l.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      );
-    }
-    return (
-      <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-      </svg>
-    );
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-gradient-to-b from-white to-zinc-200 dark:from-zinc-950 dark:to-zinc-900 transition-all duration-500">
-      <header className="px-6 py-4 flex items-center justify-between border-b border-gray-200/50 dark:border-zinc-800 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl sticky top-0 z-30">
-        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
-          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          <h1 className="text-xl font-bold font-google text-gray-900 dark:text-white tracking-tight">SmartCalc AI</h1>
+    <div className="min-h-screen w-full flex flex-col bg-gray-50 dark:bg-zinc-950 transition-colors">
+      {isOffline && (
+        <div className="bg-amber-500 text-white text-[10px] text-center py-1 font-bold uppercase tracking-widest z-50">
+          Offline - AI Unavailable
         </div>
-        
-        <div className="flex items-center gap-1 md:gap-2">
-          <button onClick={() => setShowSettings(true)} className="p-2.5 text-gray-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800 rounded-full transition-all active:scale-90" title="Settings">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-          </button>
-          <button onClick={() => setShowHistory(true)} className="p-2.5 text-gray-500 dark:text-zinc-400 hover:bg-white/50 dark:hover:bg-zinc-800 rounded-full transition-all active:scale-90" title="History">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          </button>
-          <div className="w-px h-6 bg-gray-200 dark:bg-zinc-800 mx-1 hidden md:block"></div>
+      )}
+      
+      <header className="px-6 py-4 flex items-center justify-between border-b border-gray-100 dark:border-zinc-900 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl sticky top-0 z-30">
+        <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+          <span className="p-1.5 bg-indigo-600 text-white rounded-lg">C</span> SmartCalc
+        </h1>
+        <div className="flex gap-2">
           <button 
-            onClick={toggleTheme} 
-            className="p-2.5 hover:bg-white/50 dark:hover:bg-zinc-800 rounded-full transition-all active:scale-90 flex items-center justify-center" 
-            title={`Theme: ${theme}`}
+            onClick={() => setShowSettings(true)} 
+            className="p-2 text-gray-500 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800"
+            aria-label="Settings"
           >
-            {getThemeIcon()}
+            ⚙️
+          </button>
+          <button 
+            onClick={() => setShowHistory(true)} 
+            className="p-2 text-gray-500 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800"
+            aria-label="History"
+          >
+            🕒
           </button>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center p-4 max-w-4xl mx-auto w-full">
+      <main className="flex-1 flex items-center justify-center p-4">
         <Calculator 
           display={display} 
-          setDisplay={setDisplay}
-          formula={formula}
-          setFormula={setFormula}
-          mode={mode}
-          setMode={setMode}
-          onAIQuery={handleAIQuery}
-          isProcessingAI={isProcessingAI}
-          addToHistory={addToHistory}
-          aiDetail={lastAIDetail}
+          setDisplay={setDisplay} 
+          formula={formula} 
+          setFormula={setFormula} 
+          mode={mode} 
+          setMode={setMode} 
+          onAIQuery={handleAIQuery} 
+          isProcessingAI={isProcessingAI} 
+          addToHistory={addToHistory} 
+          aiDetail={lastAIDetail} 
         />
       </main>
 
@@ -188,29 +131,24 @@ const App: React.FC = () => {
         <HistorySidebar 
           history={history} 
           onClose={() => setShowHistory(false)} 
-          onClear={clearHistory}
-          onSelect={(item) => {
-            setDisplay(item.result);
-            setFormula(item.expression);
-            setShowHistory(false);
-            setLastAIDetail(undefined);
-          }}
+          onClear={() => setHistory([])} 
+          onSelect={(i) => { 
+            setDisplay(i.result); 
+            setFormula(i.expression); 
+            setShowHistory(false); 
+          }} 
         />
       )}
-
+      
       {showSettings && (
         <SettingsModal 
+          theme={theme} 
+          setTheme={setTheme} 
           limit={historyLimit}
           setLimit={setHistoryLimit}
-          theme={theme}
-          setTheme={setTheme}
-          onClose={() => setShowSettings(false)}
+          onClose={() => setShowSettings(false)} 
         />
       )}
-
-      <footer className="py-4 text-center text-xs text-gray-400 dark:text-zinc-600 font-medium tracking-wide">
-        Powered by Waxz Solutions
-      </footer>
     </div>
   );
 };
